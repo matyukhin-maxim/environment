@@ -1,35 +1,50 @@
 version: '3'
 
-networks: 
+networks:
   develop:
 
-volumes: 
+volumes:
   db-data:
-  
-services: 
+
+services:
   db:
     image: mysql:5.7
     container_name: db
     restart: unless-stopped
     ports:
-      - '33060:3306'
-    environment: 
+      - '3306:3306'
+    environment:
       MYSQL_DATABASE: laravel
       MYSQL_ROOT_PASSWORD: secret
-    volumes: 
+    volumes:
       - db-data:/var/lib/mysql
       - ./config/mysql/my.cnf:/etc/mysql/my.cnf
-    networks: 
+    networks:
       - develop
-  
+
   fpm:
-    build: 
+    build:
       context: ./config/php/
       dockerfile: Dockerfile
+    image: max/laravel
     restart: unless-stopped
     container_name: workspace
     working_dir: /var/www
-    links: 
-      - db
-    volumes: 
+    volumes:
       - ./workspace:/var/www
+    networks:
+      - develop
+
+  web:
+    image: nginx:alpine
+    container_name: web
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./workspace:/var/www
+      - ./config/nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - develop
+    links:
+      - fpm
