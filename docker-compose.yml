@@ -1,0 +1,35 @@
+version: '3'
+
+networks: 
+  develop:
+
+volumes: 
+  db-data:
+  
+services: 
+  db:
+    image: mysql:5.7
+    container_name: db
+    restart: unless-stopped
+    ports:
+      - '33060:3306'
+    environment: 
+      MYSQL_DATABASE: laravel
+      MYSQL_ROOT_PASSWORD: secret
+    volumes: 
+      - db-data:/var/lib/mysql
+      - ./config/mysql/my.cnf:/etc/mysql/my.cnf
+    networks: 
+      - develop
+  
+  fpm:
+    build: 
+      context: ./config/php/
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    container_name: workspace
+    working_dir: /var/www
+    links: 
+      - db
+    volumes: 
+      - ./workspace:/var/www
